@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	    <script src="js/jquery-1.11.2.min.js" type="text/javascript"></script>
+	    <script src="js/jquery-ui.js" type="text/javascript"></script>
+	    <script src="js/grid.js" type="text/javascript"></script>
+	    <script src="js/piece.js" type="text/javascript"></script>
+	    <script src="js/gridCell.js" type="text/javascript"></script>
+		<link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
+		<title>Match 3</title>
+		<style>
+			html, body { margin: 0; padding: 0 }
+			.title {
+				position: fixed;
+				top: 35px;
+				left: 45%;
+				font-size: 25px;
+				font-family: Verdana;
+			}
+			.scoreboard {
+				position: fixed;
+				top: 35px;
+				left: 45%;
+				font-size: 25px;
+				font-family: Verdana;
+			}
+			.grid {
+				position: fixed;
+				top: 100px;
+				left: 200px;
+			}
+		</style>
+
+	    <script type="text/javascript">
+		var grid;
+
+	    $( document ).ready(function() {
+	    	grid = new Match3(10, 5, 100);
+	    	grid.fill();
+		});
+	    </script>
+	</head>
+	<body>
+		<div class="title">Match 3!</div>
+	    <div class="grid"></div>
+	</body>
+</html>
