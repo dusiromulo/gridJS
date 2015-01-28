@@ -48,39 +48,20 @@ function Piece(position_x, position_y, color, image, parent){
 		$(this.element).css("left", this.parent.grid_element.position().left + this.position_x * this.parent.cell_size + "px");
 	}
 
-	this.setupDraggableProperties = function(self, element){
-		$(element).draggable({
+	this.setupDraggableProperties = function(pieceInstance, htmlElement){
+		$(htmlElement).draggable({
 			cursor: "move",
 			opacity: 0.5,
 			containment: this.generateLimits(this.position_x, this.position_y),
 			grid: [this.parent.cell_size, this.parent.cell_size],
 			start: function( event, ui ) {
-				self.x_current_piece_moving = event.originalEvent.pageX;
-				self.y_current_piece_moving = event.originalEvent.pageY;
-				
-				self.parent.user_drag_piece = self;
-				
-				self.parent.user_drag_piece_position_x = (ui.originalPosition.left - self.parent.grid_element.position().left) / self.parent.cell_size;
-				self.parent.user_drag_piece_position_y = (ui.originalPosition.top - self.parent.grid_element.position().top) / self.parent.cell_size;
+				pieceInstance.parent.clickPiece(pieceInstance, event, ui);
 			}, 
 		    drag: function (event, ui) { 
-		    	var drag_type = self.doSwapIfNecessary(self, ui);
-
-		    	if (drag_type == this.SAME_PLACE_ORIGIN){
-		    		if (self.x_current_piece_moving) {
-			            axis = Math.abs(event.originalEvent.pageX - self.x_current_piece_moving) > Math.abs(event.originalEvent.pageY - self.y_current_piece_moving) ? 'x' : 'y';
-			            $(this).draggable('option', 'axis', axis);
-			            self.x_current_piece_moving = self.y_current_piece_moving = null;
-		        	}
-		        	else{
-		        		self.x_current_piece_moving = event.originalEvent.pageX;
-						self.y_current_piece_moving = event.originalEvent.pageY;
-		        	}
-		    	}
+		    	pieceInstance.parent.dragPiece(pieceInstance, ui, event, this);
 		    },
 		    stop: function() {
-		        self.x_current_piece_moving = self.y_current_piece_moving = null;
-		        $(this).draggable('option', 'axis', false);
+		    	pieceInstance.parent.dropPiece(pieceInstance, this);
 		    }
 		});
 	}

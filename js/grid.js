@@ -42,7 +42,58 @@ function Match3(size_x, size_y, cell_size){
 	};
 
 	this.drop = function(){
+		if (this.has_changed){
+			this.user_drag_piece.position_x = this.secondary_drag_piece_position_x;
+			this.user_drag_piece.position_y = this.secondary_drag_piece_position_y;
+
+			this.matrix_pieces[this.user_drag_piece_position_y][this.user_drag_piece_position_x] = this.secondary_drag_piece;
+			this.matrix_pieces[this.secondary_drag_piece_position_y][this.secondary_drag_piece_position_x] = this.user_drag_piece;
+
+			// Set full color
+			$(this.user_drag_piece.element).css('opacity', 1);
+			$(this.secondary_drag_piece.element).css('opacity', 1);
+
+			// Set new limit
+			this.user_drag_piece.setUpNewLimit();
+			this.secondary_drag_piece.setUpNewLimit();
+			
+			this.user_drag_piece = null;
+			this.secondary_drag_piece = null;
+			this.has_changed = false;
+
+			this.verifyWin();
+		}
+	}
+
+	this.clickPiece = function(self, event, ui){
+		self.x_current_piece_moving = event.originalEvent.pageX;
+		self.y_current_piece_moving = event.originalEvent.pageY;
 		
+		this.user_drag_piece = self;
+		
+		this.user_drag_piece_position_x = (ui.originalPosition.left - this.grid_element.position().left) / this.cell_size;
+		this.user_drag_piece_position_y = (ui.originalPosition.top - this.grid_element.position().top) / this.cell_size;
+	}
+
+	this.dragPiece = function(pieceInstance, ui, event, thisDraggable){
+		var drag_type = pieceInstance.doSwapIfNecessary(pieceInstance, ui);
+
+    	if (drag_type == thisDraggable.SAME_PLACE_ORIGIN){
+    		if (pieceInstance.x_current_piece_moving) {
+	            axis = Math.abs(event.originalEvent.pageX - pieceInstance.x_current_piece_moving) > Math.abs(event.originalEvent.pageY - pieceInstance.y_current_piece_moving) ? 'x' : 'y';
+	            $(thisDraggable).draggable('option', 'axis', axis);
+	            pieceInstance.x_current_piece_moving = pieceInstance.y_current_piece_moving = null;
+        	}
+        	else{
+        		pieceInstance.x_current_piece_moving = event.originalEvent.pageX;
+				pieceInstance.y_current_piece_moving = event.originalEvent.pageY;
+        	}
+    	}
+	}
+
+	this.dropPiece = function(pieceInstance, thisDraggable){
+		pieceInstance.x_current_piece_moving = pieceInstance.y_current_piece_moving = null;
+        $(thisDraggable).draggable('option', 'axis', false);
 	}
 
 	this.verifyHasCombination = function(y_max, x_max){
