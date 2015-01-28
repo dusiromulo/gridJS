@@ -1,8 +1,8 @@
-function Piece(position_x, position_y, color, image, parent){
+function Piece(position_x, position_y, color, image_path, parent){
 	this.position_x = position_x;
 	this.position_y = position_y;
 	this.color = color;
-	this.image = image;
+	this.image_path = image_path;
 	this.parent = parent;
 	this.element = null;
 	this.limits = null;
@@ -20,8 +20,8 @@ function Piece(position_x, position_y, color, image, parent){
 	}
 
 	this.setupImage = function(){
-		if (this.image){
-			$(this.element).append("<img src='" + this.image + "' style='display:block;margin-left:auto;margin-right:auto;margin-top:8px;'>");
+		if (this.image_path){
+			$(this.element).append("<img src='" + this.image_path + "' style='display:block;margin-left:auto;margin-right:auto;margin-top:8px;'>");
 		}
 	}
 
@@ -40,12 +40,14 @@ function Piece(position_x, position_y, color, image, parent){
 		});
 	}
 
-	this.move = function(position_x, position_y){
+	this.moveInCss = function(position_x, position_y){
+		$(this.element).css("top", this.parent.grid_element.position().top + position_y * this.parent.cell_size + "px");
+		$(this.element).css("left", this.parent.grid_element.position().left + position_x * this.parent.cell_size + "px");
+	}
+
+	this.movePositions = function(position_x, position_y){
 		this.position_x = position_x;
 		this.position_y = position_y;
-
-		$(this.element).css("top", this.parent.grid_element.position().top + this.position_y * this.parent.cell_size + "px");
-		$(this.element).css("left", this.parent.grid_element.position().left + this.position_x * this.parent.cell_size + "px");
 	}
 
 	this.setupDraggableProperties = function(pieceInstance, htmlElement){
@@ -107,8 +109,10 @@ function Piece(position_x, position_y, color, image, parent){
 	    	if (self.parent.secondary_drag_piece){
 				
 				$(self.parent.secondary_drag_piece.element).css('opacity', 1.0);
-				
-				self.parent.secondary_drag_piece.move(self.parent.secondary_drag_piece_position_x, self.parent.secondary_drag_piece_position_y);
+
+				console.log("SAME_PLACE_ORIGIN é " + self.parent.secondary_drag_piece_position_x + " / "+ self.parent.secondary_drag_piece_position_y);
+	    		self.parent.secondary_drag_piece.movePositions(self.parent.secondary_drag_piece_position_x, self.parent.secondary_drag_piece_position_y);
+				self.parent.secondary_drag_piece.moveInCss(self.parent.secondary_drag_piece_position_x, self.parent.secondary_drag_piece_position_y);
 	    		
 	    		self.parent.secondary_drag_piece = null;
 	    		self.parent.secondary_drag_piece_position_x = null;
@@ -125,11 +129,14 @@ function Piece(position_x, position_y, color, image, parent){
 			self.parent.secondary_drag_piece = self.parent.matrix_pieces[y][x];
 	    	
 	    	$(self.parent.secondary_drag_piece.element).css('opacity', 0.5);
-	    	
-	    	self.parent.secondary_drag_piece.move(self.parent.user_drag_piece_position_x, self.parent.user_drag_piece_position_y);
+
+			console.log("DIFF_PLACE_ORIGIN é " + self.parent.click_drag_piece_position_x + " / "+ self.parent.click_drag_piece_position_y);
+	    	self.parent.secondary_drag_piece.movePositions(self.parent.click_drag_piece_position_x, self.parent.click_drag_piece_position_y);
+	    	self.parent.secondary_drag_piece.moveInCss(self.parent.click_drag_piece_position_x, self.parent.click_drag_piece_position_y);
 	    	
 	    	self.parent.secondary_drag_piece_position_x = (ui.position.left - self.parent.grid_element.position().left) / self.parent.cell_size;
 			self.parent.secondary_drag_piece_position_y = (ui.position.top - self.parent.grid_element.position().top) / self.parent.cell_size;
+			
 			self.parent.has_changed = true;	
 			return this.DIFF_PLACE_ORIGIN;
 		}
