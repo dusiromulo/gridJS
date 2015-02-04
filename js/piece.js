@@ -1,6 +1,7 @@
-function Piece(position_x, position_y, color, image_path, parent){
+function Piece(position_x, position_y, type_piece, color, image_path, parent){
 	this.position_x = position_x;
 	this.position_y = position_y;
+	this.type_piece = type_piece;
 	this.color = color;
 	this.image_path = image_path;
 	this.parent = parent;
@@ -45,6 +46,12 @@ function Piece(position_x, position_y, color, image_path, parent){
 		$(this.element).css("left", this.parent.grid_element.position().left + position_x * this.parent.cell_size + "px");
 	}
 
+	this.moveInCssWithAnimations = function(position_x, position_y){
+		var prop = {top: this.parent.grid_element.position().top + this.position_y * this.parent.cell_size + "px", 
+					left: this.parent.grid_element.position().left + this.position_x * this.parent.cell_size + "px"};
+		$(this.element).animate(prop, 300);
+	}
+
 	this.movePositions = function(position_x, position_y){
 		this.position_x = position_x;
 		this.position_y = position_y;
@@ -53,7 +60,6 @@ function Piece(position_x, position_y, color, image_path, parent){
 	this.setupDraggableProperties = function(pieceInstance, htmlElement){
 		$(htmlElement).draggable({
 			cursor: "move",
-			opacity: 0.5,
 			containment: this.generateLimits(this.position_x, this.position_y),
 			grid: [this.parent.cell_size, this.parent.cell_size],
 			start: function( event, ui ) {
@@ -110,7 +116,7 @@ function Piece(position_x, position_y, color, image_path, parent){
 				
 				$(self.parent.secondary_drag_piece.element).css('opacity', 1.0);
 
-				console.log("SAME_PLACE_ORIGIN é " + self.parent.secondary_drag_piece_position_x + " / "+ self.parent.secondary_drag_piece_position_y);
+				//console.log("SAME_PLACE_ORIGIN é " + self.parent.secondary_drag_piece_position_x + " / "+ self.parent.secondary_drag_piece_position_y);
 	    		self.parent.secondary_drag_piece.movePositions(self.parent.secondary_drag_piece_position_x, self.parent.secondary_drag_piece_position_y);
 				self.parent.secondary_drag_piece.moveInCss(self.parent.secondary_drag_piece_position_x, self.parent.secondary_drag_piece_position_y);
 	    		
@@ -130,7 +136,7 @@ function Piece(position_x, position_y, color, image_path, parent){
 	    	
 	    	$(self.parent.secondary_drag_piece.element).css('opacity', 0.5);
 
-			console.log("DIFF_PLACE_ORIGIN é " + self.parent.click_drag_piece_position_x + " / "+ self.parent.click_drag_piece_position_y);
+			//console.log("DIFF_PLACE_ORIGIN é " + self.parent.click_drag_piece_position_x + " / "+ self.parent.click_drag_piece_position_y);
 	    	self.parent.secondary_drag_piece.movePositions(self.parent.click_drag_piece_position_x, self.parent.click_drag_piece_position_y);
 	    	self.parent.secondary_drag_piece.moveInCss(self.parent.click_drag_piece_position_x, self.parent.click_drag_piece_position_y);
 	    	
