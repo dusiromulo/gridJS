@@ -75,11 +75,15 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 				this.matrix_pieces[this.click_drag_piece_position_y][this.click_drag_piece_position_x] = this.click_drag_piece;
 				this.matrix_pieces[this.secondary_drag_piece_position_y][this.secondary_drag_piece_position_x] = this.secondary_drag_piece;
 
+				$(this.secondary_drag_piece.element).draggable({ disabled: true });
+				$(this.click_drag_piece.element).draggable({ disabled: true });
 				this.secondary_drag_piece.movePositions(this.secondary_drag_piece_position_x, this.secondary_drag_piece_position_y);
 				this.secondary_drag_piece.moveInCssWithAnimations(this.secondary_drag_piece_position_x, this.secondary_drag_piece_position_y);
 	    		
 	    		this.click_drag_piece.movePositions(this.click_drag_piece_position_x, this.click_drag_piece_position_y);
 				this.click_drag_piece.moveInCssWithAnimations(this.click_drag_piece_position_x, this.click_drag_piece_position_y);
+				
+				
 			}
 		}
 	}

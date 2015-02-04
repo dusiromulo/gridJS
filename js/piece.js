@@ -49,7 +49,10 @@ function Piece(position_x, position_y, type_piece, color, image_path, parent){
 	this.moveInCssWithAnimations = function(position_x, position_y){
 		var prop = {top: this.parent.grid_element.position().top + this.position_y * this.parent.cell_size + "px", 
 					left: this.parent.grid_element.position().left + this.position_x * this.parent.cell_size + "px"};
-		$(this.element).animate(prop, 300);
+		var element = this.element;
+		$(element).animate(prop, 300, function(){
+			$(element).draggable({ disabled: false });
+		});
 	}
 
 	this.movePositions = function(position_x, position_y){
