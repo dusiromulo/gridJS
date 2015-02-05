@@ -35,6 +35,9 @@ function Piece(position_x, position_y, type_piece, color, image_path, parent){
 		$(this.element).css("position", "fixed");
 		$(this.element).css("background-color", this.color);
 		$(this.element).css("border-radius", "8px");
+		$(this.element).css("-webkit-transition-duration", "1s");
+		$(this.element).css("-webkit-transition-property", "all");
+		$(this.element).css("-webkit-transition-timing-function", "ease-in-out");
 		$(this.element).css("z-index", 2);
 		$(this.element).hover(function() {
 			$(this).css("cursor","move");
@@ -50,7 +53,7 @@ function Piece(position_x, position_y, type_piece, color, image_path, parent){
 		var prop = {top: this.parent.grid_element.position().top + this.position_y * this.parent.cell_size + "px", 
 					left: this.parent.grid_element.position().left + this.position_x * this.parent.cell_size + "px"};
 		var element = this.element;
-		$(element).animate(prop, 300, function(){
+		$(element).animate(prop, 200, "swing", function(){
 			$(element).draggable({ disabled: false });
 		});
 	}
@@ -149,6 +152,19 @@ function Piece(position_x, position_y, type_piece, color, image_path, parent){
 			self.parent.has_changed = true;	
 			return this.DIFF_PLACE_ORIGIN;
 		}
+	}
+	this.deletePiece = function(){
+		Element.prototype.remove = function() {
+		    this.parentElement.removeChild(this);
+		}
+		NodeList.prototype.remove = HTMLCollection.prototype.remove = function() {
+		    for(var i = 0, len = this.length; i < len; i++) {
+		        if(this[i] && this[i].parentElement) {
+		            this[i].parentElement.removeChild(this[i]);
+		        }
+		    }
+		}
+		this.element.remove();
 	}
 }
 
