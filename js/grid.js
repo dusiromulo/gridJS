@@ -63,8 +63,9 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 				this.removePieces();
 
 				this.fallPieces();
-
-				this.makeNewPieces();
+				var instance = this;
+				setTimeout(function(){ instance.makeNewPieces(); }, 1500);
+				
 				// Set new limit
 				this.click_drag_piece.setUpNewLimit();
 				this.secondary_drag_piece.setUpNewLimit();
