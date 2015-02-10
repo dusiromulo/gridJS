@@ -3,8 +3,9 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 	this.size_y = size_y;
 	this.cell_size = cell_size;
 	this.quantity_of_types = quantity_of_types;
-	this.matrix_pieces = createMatrixOfPieces(size_x, size_y);
+	this.matrix_pieces = createMatrix(size_x, size_y);
 	this.types = arrayOfTypes(quantity_of_types);		
+	this.points = 0;
 	this.colors = ['#00FFCC', '#33FFA3', '#66FF7A', '#99FF52', '#CCFF29', '#FFFF00'];
 	this.images = ['images/ball.png', 'images/heart.png', 'images/star.png'];
 
@@ -16,14 +17,25 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 	this.secondary_drag_piece_position_x = null;
 	this.secondary_drag_piece_position_y = null;
 
+	this.stateOfGame = null;
+
+	this.statesOfGame = {
+		"READY_TO_CLICK": 0x01,
+		"FALLING_PIECES": 0x02,
+		"MAKING_NEW_PIECES": 0x03,
+		"REMOVING_MATCHED": 0x04,
+		"MOVE_BACK_NOT_MATCHED": 0x05,
+	};
+
 	this.has_changed = false;
 
 	this.grid_element = $(".grid");
 	this.fill = function(){
+		this.stateOfGame = this.statesOfGame['MAKING_NEW_PIECES'];
 		for (var line = 0; line < this.size_y; line++){
 			for (var column = 0; column < this.size_x; column++){
 				var index = getRandomIndex(quantity_of_types);
-				this.matrix_pieces[line][column] = new Piece(column, line, this.types[index],this.colors[index], null/*this.images[index]*/, this);
+				this.matrix_pieces[line][column] = new Piece(column, line, this.types[index],this.colors[index], this.images[index % 3], this);
 				this.matrix_pieces[line][column].element = this.matrix_pieces[line][column].createUi();
 				this.matrix_pieces[line][column].setupImage();
 
@@ -37,15 +49,35 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 				this.matrix_pieces[line][column].setupCss();
 			}
 		}
+		this.stateOfGame = this.statesOfGame['REMOVING_MATCHED'];
+		var instance = this;
+		setTimeout(function(){ instance.removeAnimationsProperties(); }, 1500);	
+		setTimeout(function(){ instance.removePiecesMatched() }, 1700);
 	};
+
+	this.removeAnimationsProperties = function(){
+		for (var line = 0; line < this.size_y; line++){
+			for (var column = 0; column < this.size_x; column++){
+				this.matrix_pieces[line][column].removeCssAnimationProperties();
+			}
+		}
+	}
 
 	this.verifyWin = function(){
 		
 	};
 
+	this.disableClickPieces = function(toggle_option){
+		for (var line = 0; line < this.size_y; line++){
+			for (var column = 0; column < this.size_x; column++){
+				$(this.matrix_pieces[line][column].element).draggable({"disabled": toggle_option});
+			}
+		}
+	}
+
 	// Function implements droppable.drop() in jquery ui
 	this.drop = function(){
-		
+
 		$(this.click_drag_piece.element).css('opacity', 1);
 		
 		if (this.has_changed){
@@ -60,11 +92,8 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 			
 			if (this.hasCombinationWithNewMove()){
 				
-				this.removePieces();
-
-				this.fallPieces();
-				var instance = this;
-				setTimeout(function(){ instance.makeNewPieces(); }, 1500);
+				this.stateOfGame = this.statesOfGame['REMOVING_MATCHED'];
+				this.removePiecesMatched();
 				
 				// Set new limit
 				this.click_drag_piece.setUpNewLimit();
@@ -80,8 +109,8 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 				this.matrix_pieces[this.click_drag_piece_position_y][this.click_drag_piece_position_x] = this.click_drag_piece;
 				this.matrix_pieces[this.secondary_drag_piece_position_y][this.secondary_drag_piece_position_x] = this.secondary_drag_piece;
 
-				$(this.secondary_drag_piece.element).draggable({ disabled: true });
-				$(this.click_drag_piece.element).draggable({ disabled: true });
+				this.stateOfGame = this.statesOfGame['MOVE_BACK_NOT_MATCHED'];
+
 				this.secondary_drag_piece.movePositions(this.secondary_drag_piece_position_x, this.secondary_drag_piece_position_y);
 				this.secondary_drag_piece.moveInCssWithAnimations(this.secondary_drag_piece_position_x, this.secondary_drag_piece_position_y);
 	    		
@@ -91,50 +120,114 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 		}
 	}
 
-	this.removePieces = function(){
-		var arrayPositions = this.verifyIfMatch(this.click_drag_piece_position_x, this.click_drag_piece_position_y);
-		
-		if (!arrayPositions[0]){
-			arrayPositions = this.verifyIfMatch(this.secondary_drag_piece_position_x, this.secondary_drag_piece_position_y);
+	this.removePiecesMatched = function(){
+		this.disableClickPieces(true);
+		if (this.stateOfGame != this.statesOfGame['REMOVING_MATCHED']){
+			console.log("this.stateOfGame != this.statesOfGame['REMOVING_MATCHED']");
+			console.log("this.stateOfGame = " + this.stateOfGame);
+			return;
 		}
 
-		var arrayLength = 3;
-		if (arrayPositions[3]){
-			arrayLength = 4;
-			if (arrayPositions[4]){
-				arrayLength = 5;
+		var matrix_aux = createMatrix(this.size_x, this.size_y);
+		var has_removed_pieces = false;
+		var points = 0;
+
+		for (var line = 0; line < this.size_y; line++){
+			for (var column = 0; column < this.size_x; column++){
+				var arrayPositionsAux = this.verifyIfMatch(column, line);
+				var arrayIterator = 0;
+				var last_column = column;
+				while (arrayPositionsAux[arrayIterator] != null){
+					if (matrix_aux[arrayPositionsAux[arrayIterator]['y']][arrayPositionsAux[arrayIterator]['x']] == null){
+						console.log("points");
+						if (arrayIterator > 2){
+							points = points*2;
+						}
+						else{
+							points += 20;
+						}
+					}
+					matrix_aux[arrayPositionsAux[arrayIterator]['y']][arrayPositionsAux[arrayIterator]['x']] = "remove";
+					if (arrayPositionsAux[arrayIterator]['x'] > last_column){
+						last_column = arrayPositionsAux[arrayIterator]['x'];
+					}
+					
+					arrayIterator++;
+				}
+				column = last_column;
 			}
 		}
-		for(var i = 0; i < arrayLength; i++){
-			this.matrix_pieces[arrayPositions[i]['y']][arrayPositions[i]['x']].deletePiece();
-			this.matrix_pieces[arrayPositions[i]['y']][arrayPositions[i]['x']] = null;
+
+		for (var line = 0; line < this.size_y; line++){
+			for (var column = 0; column < this.size_x; column++){
+				if (matrix_aux[line][column] != null){
+					has_removed_pieces = true;
+					this.matrix_pieces[line][column].deletePiece();
+					this.matrix_pieces[line][column] = null;
+				}
+			}
+		}
+
+		if (has_removed_pieces){
+			this.stateOfGame = this.statesOfGame['FALLING_PIECES'];
+			this.fallPieces();
+			var instance = this;
+			setTimeout(function(){ instance.makeNewPieces(); }, 400);
+			setTimeout(function(){ instance.removePiecesMatched() }, 2000);
+			this.points += points;
+			$("#points").html("Points: " + this.points);
+		}
+		else{
+			this.stateOfGame = this.statesOfGame['READY_TO_CLICK'];
+			this.disableClickPieces(false);
 		}
 	}
 
 	this.fallPieces = function(){
+		if (this.stateOfGame != this.statesOfGame['FALLING_PIECES']){
+			console.log("this.stateOfGame != this.statesOfGame['FALLING_PIECES']");
+			console.log("this.stateOfGame = " + this.stateOfGame);
+			return;
+		}
 		for (var line = 0; line < this.size_y; line++){
 			for (var column = 0; column < this.size_x; column++){
 				if (this.matrix_pieces[line][column] == null){
+					var piece_to_fall_destination = line;		
 					for (var lineAux = line; lineAux > 0; lineAux--){
 						if (this.matrix_pieces[lineAux - 1][column] != null){
-							var index = getRandomIndex(quantity_of_types);
-							this.matrix_pieces[lineAux][column] = this.matrix_pieces[lineAux - 1][column];
-							this.matrix_pieces[lineAux][column].movePositions(column, lineAux);
-							this.matrix_pieces[lineAux][column].moveInCssWithAnimations(column, lineAux);
+							for (var iterator = 1; iterator + line < this.size_y; iterator++){
+								if (this.matrix_pieces[line + iterator][column] == null){
+									piece_to_fall_destination = line + iterator;
+								}
+							}
+							this.matrix_pieces[piece_to_fall_destination][column] = this.matrix_pieces[lineAux - 1][column];
+							this.matrix_pieces[piece_to_fall_destination][column].movePositions(column, piece_to_fall_destination);
+
+							this.matrix_pieces[piece_to_fall_destination][column].moveInCssWithAnimations(column, piece_to_fall_destination);
+							
+							this.matrix_pieces[piece_to_fall_destination][column].setUpNewLimit();
 							this.matrix_pieces[lineAux - 1][column] = null;
 						}
+						piece_to_fall_destination--;
 					}
 				}
 			}
 		}
+
+		this.stateOfGame = this.statesOfGame['MAKING_NEW_PIECES'];
 	}
 
 	this.makeNewPieces = function(){
+		if (this.stateOfGame != this.statesOfGame['MAKING_NEW_PIECES']){
+			console.log("this.stateOfGame != this.statesOfGame['MAKING_NEW_PIECES']");
+			console.log("this.stateOfGame = " + this.stateOfGame);
+			return;
+		}
 		for (var line = 0; line < this.size_y; line++){
 			for (var column = 0; column < this.size_x; column++){
 				if (this.matrix_pieces[line][column] == null){
 					var index = getRandomIndex(quantity_of_types);
-					this.matrix_pieces[line][column] = new Piece(column, line, this.types[index],this.colors[index], null/*this.images[index]*/, this);
+					this.matrix_pieces[line][column] = new Piece(column, line, this.types[index],this.colors[index], this.images[index % 3], this);
 					this.matrix_pieces[line][column].element = this.matrix_pieces[line][column].createUi();
 					this.matrix_pieces[line][column].setupImage();
 					this.grid_element.append(this.matrix_pieces[line][column].element);
@@ -142,6 +235,10 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 				}
 			}
 		}
+		var instance = this;
+		setTimeout(function(){ instance.removeAnimationsProperties(); }, 1500);	
+
+		this.stateOfGame = this.statesOfGame['REMOVING_MATCHED'];
 	}
 
 	this.hasCombinationWithNewMove = function(){
@@ -288,7 +385,7 @@ function Match3(size_x, size_y, cell_size, quantity_of_types){
 
 }
 
-function createMatrixOfPieces(size_x, size_y){
+function createMatrix(size_x, size_y){
 	var matrix_pieces = new Array(size_y);
 	for (var line = 0; line < size_y; line++){
 		matrix_pieces[line] = new Array(size_x);

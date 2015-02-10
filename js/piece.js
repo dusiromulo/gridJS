@@ -33,15 +33,21 @@ function Piece(position_x, position_y, type_piece, color, image_path, parent){
 		$(this.element).css("top", this.parent.grid_element.position().top + this.position_y * this.parent.cell_size + "px");
 		$(this.element).css("left", this.parent.grid_element.position().left + this.position_x * this.parent.cell_size + "px");
 		$(this.element).css("position", "fixed");
-		$(this.element).css("background-color", this.color);
-		$(this.element).css("border-radius", "8px");
-		$(this.element).css("-webkit-transition-duration", "1s");
+		$(this.element).css("-webkit-transition-duration", "1.5s");
 		$(this.element).css("-webkit-transition-property", "all");
 		$(this.element).css("-webkit-transition-timing-function", "ease-in-out");
+		$(this.element).css("background-color", this.color);
+		$(this.element).css("border-radius", "8px");
 		$(this.element).css("z-index", 2);
 		$(this.element).hover(function() {
 			$(this).css("cursor","move");
 		});
+	}
+	
+	this.removeCssAnimationProperties = function(){
+		$(this.element).css("-webkit-transition-duration", "none");
+		$(this.element).css("-webkit-transition-property", "none");
+		$(this.element).css("-webkit-transition-timing-function", "none");
 	}
 
 	this.moveInCss = function(position_x, position_y){
@@ -52,9 +58,12 @@ function Piece(position_x, position_y, type_piece, color, image_path, parent){
 	this.moveInCssWithAnimations = function(position_x, position_y){
 		var prop = {top: this.parent.grid_element.position().top + this.position_y * this.parent.cell_size + "px", 
 					left: this.parent.grid_element.position().left + this.position_x * this.parent.cell_size + "px"};
-		var element = this.element;
-		$(element).animate(prop, 200, "swing", function(){
-			$(element).draggable({ disabled: false });
+		var instance = this;
+		$(this.element).animate(prop, 800, "swing", function(){
+			if (instance.parent.stateOfGame == instance.parent.statesOfGame['MOVE_BACK_NOT_MATCHED'])
+			{
+				instance.parent.stateOfGame = instance.parent.statesOfGame['READY_TO_DRAG'];
+			}
 		});
 	}
 
@@ -115,15 +124,14 @@ function Piece(position_x, position_y, type_piece, color, image_path, parent){
 		$(this.element).draggable('option', 'containment', this.limits);
 	}
 
-	this.doSwapIfNecessary = function(self, ui){
+	this.doSwapIfNecessary = function(self, ui){	
 		if (self.position_x == ((ui.position.left - self.parent.grid_element.position().left) / self.parent.cell_size) && 
 			self.position_y == ((ui.position.top - self.parent.grid_element.position().top) / self.parent.cell_size)){
 	    	if (self.parent.secondary_drag_piece){
 				
 				$(self.parent.secondary_drag_piece.element).css('opacity', 1.0);
 
-				//console.log("SAME_PLACE_ORIGIN é " + self.parent.secondary_drag_piece_position_x + " / "+ self.parent.secondary_drag_piece_position_y);
-	    		self.parent.secondary_drag_piece.movePositions(self.parent.secondary_drag_piece_position_x, self.parent.secondary_drag_piece_position_y);
+				self.parent.secondary_drag_piece.movePositions(self.parent.secondary_drag_piece_position_x, self.parent.secondary_drag_piece_position_y);
 				self.parent.secondary_drag_piece.moveInCss(self.parent.secondary_drag_piece_position_x, self.parent.secondary_drag_piece_position_y);
 	    		
 	    		self.parent.secondary_drag_piece = null;
@@ -142,7 +150,6 @@ function Piece(position_x, position_y, type_piece, color, image_path, parent){
 	    	
 	    	$(self.parent.secondary_drag_piece.element).css('opacity', 0.5);
 
-			//console.log("DIFF_PLACE_ORIGIN é " + self.parent.click_drag_piece_position_x + " / "+ self.parent.click_drag_piece_position_y);
 	    	self.parent.secondary_drag_piece.movePositions(self.parent.click_drag_piece_position_x, self.parent.click_drag_piece_position_y);
 	    	self.parent.secondary_drag_piece.moveInCss(self.parent.click_drag_piece_position_x, self.parent.click_drag_piece_position_y);
 	    	
@@ -164,7 +171,9 @@ function Piece(position_x, position_y, type_piece, color, image_path, parent){
 		        }
 		    }
 		}
-		this.element.remove();
+		$(this.element).fadeOut();
+		var instance = this;
+		setTimeout(function(){ instance.element.remove(); }, 1500);	
 	}
 }
 
